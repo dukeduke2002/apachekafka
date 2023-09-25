@@ -39,7 +39,10 @@ public class AbstractConfig {
     /* configs for which values have been requested, used to detect unused configs */
     private final Set<String> used;
 
-    /* the original values passed in by the user */
+    /*
+    * the original values passed in by the user
+    * 在创建kakfaProducer时传入的key/value配置项
+    */
     private final Map<String, ?> originals;
 
     /* the parsed values */
@@ -189,6 +192,7 @@ public class AbstractConfig {
     /**
      * Get a configured instance of the give class specified by the given configuration key. If the object implements
      * Configurable configure it using the configuration.
+     * 主要功能是通过反射机制实例化originals字段中指定的类
      *
      * @param key The configuration key for the class
      * @param t The interface the class should implement

@@ -14,11 +14,15 @@ package org.apache.kafka.common;
 
 /**
  * Information about a Kafka node
+ * 表示Kafka集群中的一个节点
  */
 public class Node {
 
     private static final Node NO_NODE = new Node(-1, "", -1);
 
+    /**
+     * 节点Id
+     */
     private final int id;
     private final String idString;
     private final String host;

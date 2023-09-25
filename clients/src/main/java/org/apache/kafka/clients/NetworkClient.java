@@ -44,6 +44,7 @@ import java.util.Random;
  * user-facing producer and consumer clients.
  * <p>
  * This class is not thread-safe!
+ * 一个针对异步请求/应答的网络IO 的网络客户端。这是一个内部类，用来实现用户层面的生产消费者客户端。非线程安全的。
  */
 public class NetworkClient implements KafkaClient {
 

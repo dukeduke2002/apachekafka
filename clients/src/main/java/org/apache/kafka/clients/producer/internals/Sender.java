@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The background thread that handles the sending of produce requests to the Kafka cluster. This thread makes metadata
  * requests to renew its view of the cluster and then sends produce requests to the appropriate nodes.
+ * 一个后台线程，主要负责发送生产请求到kafka集群。该线程会更新kafka集群的metadata，将produce Request发送到正确的节点。
  */
 public class Sender implements Runnable {
 
@@ -170,8 +171,10 @@ public class Sender implements Runnable {
      *            The current POSIX time in milliseconds
      */
     void run(long now) {
+        // 从Metadata获取Kafka集群元数据
         Cluster cluster = metadata.fetch();
         // get the list of partitions with data ready to send
+        // 调用ready()方法得到readyNodes集合后，此集合还要经过NetworkClient的过滤，才能得到最终能够发送消息的Node集合
         RecordAccumulator.ReadyCheckResult result = this.accumulator.ready(cluster, now);
 
         // if there are any partitions whose leaders are not known yet, force metadata update

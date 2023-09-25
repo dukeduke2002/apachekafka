@@ -23,8 +23,13 @@ import org.apache.kafka.clients.producer.RecordMetadata;
  * The future result of a record send
  */
 public final class FutureRecordMetadata implements Future<RecordMetadata> {
-
+    /**
+     * 指向对应消息所在RecrodBatch的produceFutuer字段
+     */
     private final ProduceRequestResult result;
+    /**
+     * 记录了对象消息在RecordBatch中的偏移量
+     */
     private final long relativeOffset;
     private final long timestamp;
     private final long checksum;

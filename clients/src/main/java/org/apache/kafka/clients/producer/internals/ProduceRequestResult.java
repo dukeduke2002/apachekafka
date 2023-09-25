@@ -26,11 +26,17 @@ import org.apache.kafka.common.TopicPartition;
  * A class that models the future completion of a produce request for a single partition. There is one of these per
  * partition in a produce request and it is shared by all the {@link RecordMetadata} instances that are batched together
  * for the same partition in the request.
+ * 一个类，用于模拟单个分区的生产请求的未来完成情况。生产请求中的每个分区都有一个，它由请求中同一分区批处理在一起的所有 {@link RecordMetadata} 实例共享。
+ * 当RecordBatch中全部消息被正常相应，或超时，或关闭生产者时，会调用done()方法，将produceFuture标记为完成并通过error字段区分“异常完成"还是"正常完成"，
+ * 之后调用CountDownLatch的countDown()方法。此时，会唤醒阻塞在CountDownLatch的await方法的线程。
  */
 public final class ProduceRequestResult {
 
     private final CountDownLatch latch = new CountDownLatch(1);
     private volatile TopicPartition topicPartition;
+    /**
+     * 表示的是服务端为此RecordBatch中第一条消息分配的offset，这样每个消息可以根据此offset以及自身在此RecordBatch中的相对偏移量，计算出其在服务端分区中的偏移量了。
+     */
     private volatile long baseOffset = -1L;
     private volatile RuntimeException error;
 

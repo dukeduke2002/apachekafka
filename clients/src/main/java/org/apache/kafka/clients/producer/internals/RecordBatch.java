@@ -26,25 +26,64 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A batch of records that is or will be sent.
- * 
+ * 一批准备发送的消息。该类是线程不安全的，需要加入外部同步加入需要修改的话。
  * This class is not thread safe and external synchronization must be used when modifying it
+ * 每个RecordBatch对象中封装了一个MemoryRecords对象，还有很多控制信息和统计信息。
  */
 public final class RecordBatch {
 
     private static final Logger log = LoggerFactory.getLogger(RecordBatch.class);
 
+    /**
+     * 记录了保存的Record的个数
+     */
     public int recordCount = 0;
+
+    /**
+     * 最大Record的字节数
+     */
     public int maxRecordSize = 0;
+
+    /**
+     * 尝试发送当前RecordBatch的次数
+     */
     public volatile int attempts = 0;
+
     public final long createdMs;
+
     public long drainedMs;
+    /**
+     * 最后一次尝试发送的时间戳
+     */
     public long lastAttemptMs;
+    /**
+     * 指向用来存储数据的MemoryRecords对象
+     */
     public final MemoryRecords records;
+
+    /**
+     * 当前RecordsBatch中缓存的信息都会发送给此TopicPartition
+     */
     public final TopicPartition topicPartition;
     public final ProduceRequestResult produceFuture;
+
+    /**
+     * 最后一次向RecordBatch追加信息的时间戳
+     */
     public long lastAppendTime;
+
+    /**
+     * Thunk对象的集合
+     */
     private final List<Thunk> thunks;
+
+    /**
+     * 用来记录某消息在RecordBatch中的偏移量
+     */
     private long offsetCounter = 0L;
+    /**
+     * 是否在重试。如果RecordBatch中的数据发送失败，则会重新尝试发送
+     */
     private boolean retry;
 
     public RecordBatch(TopicPartition tp, MemoryRecords records, long now) {
@@ -60,13 +99,13 @@ public final class RecordBatch {
 
     /**
      * Append the record to the current record set and return the relative offset within that record set
-     * 
+     * 尝试将消息添加到当前的RecordBatch中缓存
      * @return The RecordSend corresponding to this record or null if there isn't sufficient room.
      */
     public FutureRecordMetadata tryAppend(long timestamp, byte[] key, byte[] value, Callback callback, long now) {
-        if (!this.records.hasRoomFor(key, value)) {
+        if (!this.records.hasRoomFor(key, value)) { //估算剩余空间不足（这不是一个准确判断）
             return null;
-        } else {
+        } else { //想MemoryRecords中添加数据
             long checksum = this.records.append(offsetCounter++, timestamp, key, value);
             this.maxRecordSize = Math.max(this.maxRecordSize, Record.recordSize(key, value));
             this.lastAppendTime = now;
@@ -97,7 +136,7 @@ public final class RecordBatch {
         for (int i = 0; i < this.thunks.size(); i++) {
             try {
                 Thunk thunk = this.thunks.get(i);
-                if (exception == null) {
+                if (exception == null) { // 正常处理完成
                     // If the timestamp returned by server is NoTimestamp, that means CreateTime is used. Otherwise LogAppendTime is used.
                     RecordMetadata metadata = new RecordMetadata(this.topicPartition,  baseOffset, thunk.future.relativeOffset(),
                                                                  timestamp == Record.NO_TIMESTAMP ? thunk.future.timestamp() : timestamp,
@@ -112,14 +151,20 @@ public final class RecordBatch {
                 log.error("Error executing user-provided callback on message for topic-partition {}:", topicPartition, e);
             }
         }
+        // 标识整个RecordBatch都已经处理完成
         this.produceFuture.done(topicPartition, baseOffset, exception);
     }
 
     /**
      * A callback and the associated FutureRecordMetadata argument to pass to it.
+     *
      */
     final private static class Thunk {
+        /**
+         * 就是KafkaProducer.send的第二个参数
+         */
         final Callback callback;
+
         final FutureRecordMetadata future;
 
         public Thunk(Callback callback, FutureRecordMetadata future) {

@@ -53,6 +53,11 @@ public class DefaultPartitioner implements Partitioner {
         return number & 0x7fffffff;
     }
 
+    /**
+     * 空实现，继承自Configurable接口
+     * @param configs
+     */
+    @Override
     public void configure(Map<String, ?> configs) {}
 
     /**
@@ -67,9 +72,10 @@ public class DefaultPartitioner implements Partitioner {
      */
     public int partition(String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
         List<PartitionInfo> partitions = cluster.partitionsForTopic(topic);
-        int numPartitions = partitions.size();
-        if (keyBytes == null) {
-            int nextValue = counter.getAndIncrement();
+        int numPartitions = partitions.size(); //分区数量
+        if (keyBytes == null) { //消息没有Key的情况
+            int nextValue = counter.getAndIncrement(); //递增counter
+            //选择有效的分区
             List<PartitionInfo> availablePartitions = cluster.availablePartitionsForTopic(topic);
             if (availablePartitions.size() > 0) {
                 int part = DefaultPartitioner.toPositive(nextValue) % availablePartitions.size();
@@ -84,6 +90,9 @@ public class DefaultPartitioner implements Partitioner {
         }
     }
 
+    /**
+     * 是在partitioner关闭时调用的，也是空实现
+     */
     public void close() {}
 
 }

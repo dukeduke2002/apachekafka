@@ -17,6 +17,7 @@ import org.ajoberstar.grgit.Grgit
 
 buildscript {
   repositories {
+    maven { url 'https://maven.aliyun.com/repository/public/' }
     mavenCentral()
     jcenter()
   }
@@ -36,6 +37,7 @@ allprojects {
   apply plugin: "jacoco"
 
   repositories {
+    maven { url 'https://maven.aliyun.com/repository/public/' }
     mavenCentral()
   }
 
@@ -115,6 +117,8 @@ if (new File('.git').exists()) {
 
 subprojects {
   apply plugin: 'java'
+  // 在Gradle 7.0以及以后的版本中maven插件已经被移除了，改为使用"maven-publish"
+  //apply plugin: 'maven-publish'
   apply plugin: 'maven'
   apply plugin: 'signing'
   apply plugin: 'checkstyle'
@@ -127,37 +131,37 @@ subprojects {
     options.compilerArgs << "-Xlint:deprecation"
   }
 
-  uploadArchives {
-    repositories {
-      signing {
-          required { shouldSign }
-          sign configurations.archives
-
-          // To test locally, replace mavenUrl in ~/.gradle/gradle.properties to file://localhost/tmp/myRepo/
-          mavenDeployer {
-              beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-              repository(url: "${mavenUrl}") {
-                  authentication(userName: "${mavenUsername}", password: "${mavenPassword}")
-              }
-              afterEvaluate {
-                  pom.artifactId = "${archivesBaseName}"
-                  pom.project {
-                      name 'Apache Kafka'
-                      packaging 'jar'
-                      url 'http://kafka.apache.org'
-                      licenses {
-                          license {
-                              name 'The Apache Software License, Version 2.0'
-                              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                              distribution 'repo'
-                          }
-                      }
-                  }
-              }
-          }
-      }
-    }
-  }
+//  uploadArchives {
+//    repositories {
+//      signing {
+//          required { shouldSign }
+//          sign configurations.archives
+//
+//          // To test locally, replace mavenUrl in ~/.gradle/gradle.properties to file://localhost/tmp/myRepo/
+//          mavenDeployer {
+//              beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+//              repository(url: "${mavenUrl}") {
+//                  authentication(userName: "${mavenUsername}", password: "${mavenPassword}")
+//              }
+//              afterEvaluate {
+//                  pom.artifactId = "${archivesBaseName}"
+//                  pom.project {
+//                      name 'Apache Kafka'
+//                      packaging 'jar'
+//                      url 'http://kafka.apache.org'
+//                      licenses {
+//                          license {
+//                              name 'The Apache Software License, Version 2.0'
+//                              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                              distribution 'repo'
+//                          }
+//                      }
+//                  }
+//              }
+//          }
+//      }
+//    }
+//  }
 
   test {
     maxParallelForks = userMaxForks ?: Runtime.runtime.availableProcessors()

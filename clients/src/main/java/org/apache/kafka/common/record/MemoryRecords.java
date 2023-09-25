@@ -24,24 +24,29 @@ import org.apache.kafka.common.utils.AbstractIterator;
 
 /**
  * A {@link Records} implementation backed by a ByteBuffer.
+ * 表示多个消息的集合。它的构造方法是私有的，只能通过emptyRecords（）方法得到其对对象
  */
 public class MemoryRecords implements Records {
 
     private final static int WRITE_LIMIT_FOR_READABLE_ONLY = -1;
 
     // the compressor used for appends-only
+    // 压缩器，对消息数据进行压缩，将压缩后的数据输出到buffer
     private final Compressor compressor;
 
     // the write limit for writable buffer, which may be smaller than the buffer capacity
+    // 记录buffer字段最多可以写入多少个字节的数据
     private final int writeLimit;
 
     // the capacity of the initial buffer, which is only used for de-allocation of writable records
     private final int initialCapacity;
 
     // the underlying buffer used for read; while the records are still writable it is null
+    // 用于保存消息数据的Java NIO ByteBuffer
     private ByteBuffer buffer;
 
     // indicate if the memory records is writable or not (i.e. used for appends or read-only)
+    // 此MemoryRecords对象是只读的模式，还可以是只写模式。在MemoryRecords发送前时，会将其设置成只读模式
     private boolean writable;
 
     // Construct a writable memory records
@@ -73,6 +78,7 @@ public class MemoryRecords implements Records {
 
     /**
      * Append the given record and offset to the buffer
+     * 先判断MemoryRecords是否为可写模式，然后调用Compressor.put*()方法，将消息数据写入ByteBuffer中
      */
     public void append(long offset, Record record) {
         if (!writable)
@@ -113,6 +119,8 @@ public class MemoryRecords implements Records {
      * capacity will be the message size which is larger than the write limit, i.e. the batch size. In this case
      * the checking should be based on the capacity of the initialized buffer rather than the write limit in order
      * to accept this single record.
+     * 根据Compressor估算的已写字节数，估计MemoryRecords剩余空间是否足够写入指定的数据。注意，这里仅仅是估算，所以不一定准确，通过hasRoomFor()
+     * 方法判断之后写入数据，也可能就会导致底层ByteBuffer出现扩容的情况。
      */
     public boolean hasRoomFor(byte[] key, byte[] value) {
         if (!this.writable)
@@ -129,6 +137,8 @@ public class MemoryRecords implements Records {
 
     /**
      * Close this batch for no more appends
+     * 出现ByteBuffer扩容的情况时，MemoryRecords.buffer字段与ByteBufferOutputStream.buffer字段所指向的不再是同一个ByteBuffer对象，
+     * 在close()方法中，会将MemoryRecords.buffer字段指向扩容后的ByteBuffer对象，同时将writable设置为false.
      */
     public void close() {
         if (writable) {

@@ -26,16 +26,36 @@ import java.util.Set;
 
 /**
  * A representation of a subset of the nodes, topics, and partitions in the Kafka cluster.
+ * Kafka元数据
  */
 public final class Cluster {
 
     private final boolean isBootstrapConfigured;
+    /**
+     * Kafka集群中节点信息列表
+     */
     private final List<Node> nodes;
     private final Set<String> unauthorizedTopics;
+    /**
+     * 记录了TopicPartition与PartitionInfo的映射关系
+     */
     private final Map<TopicPartition, PartitionInfo> partitionsByTopicPartition;
+    /**
+     * 记录了topic名称和PartitionInfo的映射关系，可以按照Topic名称查询其中全部分区的详细信息
+     */
     private final Map<String, List<PartitionInfo>> partitionsByTopic;
+    /**
+     * topic与PartitionInfo的映射关系，这里的List<PartitionInfo>中存放的分区必须是有Leader副本的Partition，而partitionByTopic中记录的分区这不一定有Leader副本，
+     * 因为某些中间状态，例如Leader副本宕机而触发的选举过程中，分区不一定有Leader副本
+     */
     private final Map<String, List<PartitionInfo>> availablePartitionsByTopic;
+    /**
+     * 记录了Node与PartitionInfo的映射关系，可按照节点Id查询其上分布的全部分区的详细信息
+     */
     private final Map<Integer, List<PartitionInfo>> partitionsByNode;
+    /**
+     * BrokerId与Node节点之间的对应关系，方便按照BrokerId进行索引
+     */
     private final Map<Integer, Node> nodesById;
 
     /**

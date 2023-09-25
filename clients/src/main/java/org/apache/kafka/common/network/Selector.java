@@ -48,6 +48,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A nioSelector interface for doing non-blocking multi-connection network I/O.
+ * 一个nioSelector的接口，负责非阻塞多链接网络I/O操作。该类于NetworkSend和NetworkReceive协同工作，传输大小限制的网络请求和应答。
+ * 一个新的链接可以被加入到该nioSelector，当然需要配上一个id，通过调用
+ * connect(String id, InetSocketAddress address, int sendBufferSize, int receiveBufferSize)
  * <p>
  * This class works with {@link NetworkSend} and {@link NetworkReceive} to transmit size-delimited network requests and
  * responses.

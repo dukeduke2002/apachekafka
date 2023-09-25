@@ -31,12 +31,14 @@ import static org.apache.kafka.common.config.ConfigDef.ValidString.in;
 /**
  * Configuration for the Kafka Producer. Documentation for these configurations can be found in the <a
  * href="http://kafka.apache.org/documentation.html#producerconfigs">Kafka documentation</a>
+ * Kafka 生产者的配置。这些配置的文档可以在 <a href=“http：kafka.apache.orgdocumentation.htmlproducerconfigs”中找到>Kafka 文档<a>
  */
 public class ProducerConfig extends AbstractConfig {
 
     /*
      * NOTE: DO NOT CHANGE EITHER CONFIG STRINGS OR THEIR JAVA VARIABLE NAMES AS THESE ARE PART OF THE PUBLIC API AND
      * CHANGE WILL BREAK USER CODE.
+     * 注意：不要更改配置字符串或其 JAVA 变量名称，因为它们是公共 API 的一部分，更改会破坏用户代码。
      */
 
     private static final ConfigDef CONFIG;
@@ -59,6 +61,11 @@ public class ProducerConfig extends AbstractConfig {
 
     /** <code>batch.size</code> */
     public static final String BATCH_SIZE_CONFIG = "batch.size";
+
+    /* 每当将多个记录发送到同一分区时，生产者将尝试将记录一起批处理到更少的请求中。这有助于客户端和服务器的性能。此配置控制默认批大小（以字节为单位）。
+    不会尝试批处理大于此大小的批记录。 发送到代理的请求将包含多个批，每个分区对应一个批处理，每个分区都有可供发送的数据。
+    小批量大小将使批处理不太常见，并可能降低吞吐量（批处理大小为零将完全禁用批处理）。非常大的批大小可能会更浪费地使用内存，因为我们总是会分配一个指定批大小的缓冲区，以期待额外的记录。
+     */
     private static final String BATCH_SIZE_DOC = "The producer will attempt to batch records together into fewer requests whenever multiple records are being sent"
                                                  + " to the same partition. This helps performance on both the client and the server. This configuration controls the "
                                                  + "default batch size in bytes. "
@@ -152,6 +159,9 @@ public class ProducerConfig extends AbstractConfig {
 
     /** <code>buffer.memory</code> */
     public static final String BUFFER_MEMORY_CONFIG = "buffer.memory";
+    /*
+    如果发送消息出去的速度小于写入消息进去的速度，就会导致缓冲区写满，此时生产消息就会阻塞住，所以说这里就应该多做一些压测，尽可能保证说这块缓冲区不会被写满导致生产行为被阻塞住
+    */
     private static final String BUFFER_MEMORY_DOC = "The total bytes of memory the producer can use to buffer records waiting to be sent to the server. If records are "
                                                     + "sent faster than they can be delivered to the server the producer will block for <code>" + MAX_BLOCK_MS_CONFIG + "</code> after which it will throw an exception."
                                                     + "<p>"

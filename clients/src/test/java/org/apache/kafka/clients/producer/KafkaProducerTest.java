@@ -36,7 +36,7 @@ public class KafkaProducerTest {
     public void testConstructorFailureCloseResource() {
         Properties props = new Properties();
         props.setProperty(ProducerConfig.CLIENT_ID_CONFIG, "testConstructorClose");
-        props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "some.invalid.hostname.foo.bar:9999");
+        props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.setProperty(ProducerConfig.METRIC_REPORTER_CLASSES_CONFIG, MockMetricsReporter.class.getName());
 
         final int oldInitCount = MockMetricsReporter.INIT_COUNT.get();
@@ -70,7 +70,42 @@ public class KafkaProducerTest {
 
         producer.close();
         Assert.assertEquals(oldInitCount + 2, MockSerializer.INIT_COUNT.get());
-        Assert.assertEquals(oldCloseCount + 2, MockSerializer.CLOSE_COUNT.get());
+        Assert.assertEquals(oldCloseCount + 2,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                MockSerializer.CLOSE_COUNT.get());
     }
 
     @Test

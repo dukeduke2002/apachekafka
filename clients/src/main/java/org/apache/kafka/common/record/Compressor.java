@@ -82,7 +82,16 @@ public class Compressor {
     });
 
     private final CompressionType type;
+
+    /**
+     * DataOutputStream对ByteBufferOutputStream进行了一层封装，为其添加了压缩的功能。
+     */
     private final DataOutputStream appendStream;
+
+    /**
+     * 是在buffer上建立的ByteBufferOutputStream(Kafka自己提供的实现）对象，ByteBufferOutputStream继承了java.io.OutputStream，
+     * 封装了ByteBuffer，当写入数据超出ByteBuffer容量时，ByteBufferOutputStream会进行自动扩容
+     */
     private final ByteBufferOutputStream bufferStream;
     private final int initPos;
 
@@ -91,6 +100,11 @@ public class Compressor {
     public float compressionRate;
     public long maxTimestamp;
 
+    /**
+     *
+     * @param buffer
+     * @param type 从KafkaProducer传递过来的压缩类型
+     */
     public Compressor(ByteBuffer buffer, CompressionType type) {
         this.type = type;
         this.initPos = buffer.position();
@@ -108,6 +122,7 @@ public class Compressor {
 
         // create the stream
         bufferStream = new ByteBufferOutputStream(buffer);
+        // 根据压缩类型创建合适的压缩流
         appendStream = wrapForOutput(bufferStream, type, COMPRESSION_DEFAULT_BUFFER_SIZE);
     }
 
@@ -231,6 +246,11 @@ public class Compressor {
         return numRecords;
     }
 
+    /**
+     * 根据指定压缩方式的压缩率，写入的未压缩数据的字节数(writtenUncompressed字段记录），估算因子（COMPRESSION_RATE_ESTIMATION_FACTOR），
+     * 估计已写入的（压缩后）字节数，此方法主要用在判断MemoryRecords是否写满的逻辑中使用。
+     * @return
+     */
     public long estimatedBytesWritten() {
         if (type == CompressionType.NONE) {
             return bufferStream.buffer().position();
@@ -245,11 +265,13 @@ public class Compressor {
     public static DataOutputStream wrapForOutput(ByteBufferOutputStream buffer, CompressionType type, int bufferSize) {
         try {
             switch (type) {
-                case NONE:
+                case NONE: //不压缩
                     return new DataOutputStream(buffer);
                 case GZIP:
                     return new DataOutputStream(new GZIPOutputStream(buffer, bufferSize));
                 case SNAPPY:
+                    // 设计小技巧：为啥snappy使用了反射方式呢？这主要是因为GZIP使用的GZIPOutputStream是JDK自带的包，而Snappy则需要引入额外的依赖包，
+                    // 为了在不使用SNAPPY压缩方式时，减少依赖包，这里使用反射的方式动态创建。
                     try {
                         OutputStream stream = (OutputStream) snappyOutputStreamSupplier.get().newInstance(buffer, bufferSize);
                         return new DataOutputStream(stream);
