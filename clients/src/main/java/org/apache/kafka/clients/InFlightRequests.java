@@ -22,10 +22,15 @@ import java.util.Map;
 
 /**
  * The set of requests which have been sent or are being sent but haven't yet received a response
+ * 主要的作用是缓存了已发送出去但没有收到响应的ClientRequest，其底层是通过一个Map<String, Deque<ClientRequest>>对象来实现的。
+ *
  */
 final class InFlightRequests {
 
     private final int maxInFlightRequestsPerConnection;
+    /**
+     * key是NodeId
+     */
     private final Map<String, Deque<ClientRequest>> requests = new HashMap<String, Deque<ClientRequest>>();
 
     public InFlightRequests(int maxInFlightRequestsPerConnection) {
@@ -80,14 +85,20 @@ final class InFlightRequests {
 
     /**
      * Can we send more requests to this node?
-     * 
+     * 用于判断是否可以向指定Node发送请求，这是条件之一
      * @param node Node in question
      * @return true iff we have no requests still being sent to the given node
      */
     public boolean canSendMore(String node) {
         Deque<ClientRequest> queue = requests.get(node);
         return queue == null || queue.isEmpty() ||
-               (queue.peekFirst().request().completed() && queue.size() < this.maxInFlightRequestsPerConnection);
+                // 表示当前队头的请求已经发送完成，如果队头的请求迟迟发布出去，可能是网络出现问题，则不能继续向此Node发送请求。
+                // 此外，队头的消息与对应KfakaChannel.send字段指向的是同一个消息，为了避免未发送的消息被覆盖，
+                // 也不能让kafkaChannel.send指向新请求。
+               (queue.peekFirst().request().completed() &&
+               //判断InFlightRequests队列中是否堆积过多请求。如果Node已经堆积了很多未响应的请求，说明这个节点负载可能较大或是网络连接有问题，
+               // 继续向其发送请求，这可能导致请求超时。
+                       queue.size() < this.maxInFlightRequestsPerConnection);
     }
 
     /**

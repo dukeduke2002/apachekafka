@@ -122,6 +122,7 @@ public class KafkaChannel {
         if (this.send != null)
             throw new IllegalStateException("Attempt to begin a send operation with prior send operation still in progress.");
         this.send = send;
+        // 关注OP_WRITE事件
         this.transportLayer.addInterestOps(SelectionKey.OP_WRITE);
     }
 
@@ -155,7 +156,10 @@ public class KafkaChannel {
     }
 
     private boolean send(Send send) throws IOException {
+        // 如果send在一次write调用时没有发送完成，selectionKey的OP_WRITE事件没有取消，还会继续监听此Channel的OP_WRITE事件，
+        // 直到整个send请求发送完毕才取消
         send.writeTo(transportLayer);
+        // 判断发送是否完成是通过ByteBuffer中是否还有剩余直接来判断的。
         if (send.completed())
             transportLayer.removeInterestOps(SelectionKey.OP_WRITE);
 

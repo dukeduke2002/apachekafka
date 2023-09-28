@@ -92,6 +92,8 @@ import org.slf4j.LoggerFactory;
  * The producer consists of a pool of buffer space that holds records that haven't yet been transmitted to the server
  * as well as a background I/O thread that is responsible for turning these records into requests and transmitting them
  * to the cluster. Failure to close the producer after use will leak these resources.
+ * 生产者由一个缓冲区空间池组成，该池保存尚未传输到服务器的记录，以及一个后台 IO 线程，该线程负责将这些记录转换为请求并将其传输到群集。使用后未能关闭生产者将泄漏这些资源。
+ *
  * <p>
  * The {@link #send(ProducerRecord) send()} method is asynchronous. When called it adds the record to a buffer of pending record sends
  * and immediately returns. This allows the producer to batch together individual records for efficiency.
